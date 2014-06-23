@@ -4,3 +4,5 @@ dist
 MANIFEST
 _build
 _static
+.idea
+build/
