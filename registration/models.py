@@ -12,9 +12,14 @@ from django.utils.translation import ugettext_lazy as _
 
 try:
     from django.contrib.auth import get_user_model
-    User = get_user_model()
 except ImportError:
     from django.contrib.auth.models import User
+    get_user_model = lambda: User
+
+try:
+    AUTH_USER_MODEL = settings.AUTH_USER_MODEL
+except AttributeError:
+    AUTH_USER_MODEL = 'auth.User'
 
 try:
     from django.utils.timezone import now as datetime_now
@@ -81,7 +86,7 @@ class RegistrationManager(models.Manager):
         user. To disable this, pass ``send_email=False``.
         
         """
-        new_user = User.objects.create_user(username, email, password)
+        new_user = get_user_model().objects.create_user(username, email, password)
         new_user.is_active = False
         new_user.save()
 
@@ -158,7 +163,7 @@ class RegistrationManager(models.Manager):
                     if not user.is_active:
                         user.delete()
                         profile.delete()
-            except User.DoesNotExist:
+            except get_user_model().DoesNotExist:
                 profile.delete()
 
 class RegistrationProfile(models.Model):
@@ -179,7 +184,7 @@ class RegistrationProfile(models.Model):
     """
     ACTIVATED = u"ALREADY_ACTIVATED"
     
-    user = models.ForeignKey(User, unique=True, verbose_name=_('user'))
+    user = models.ForeignKey(AUTH_USER_MODEL, unique=True, verbose_name=_('user'))
     activation_key = models.CharField(_('activation key'), max_length=40)
     
     objects = RegistrationManager()
